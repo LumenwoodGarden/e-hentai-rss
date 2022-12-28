@@ -10,7 +10,7 @@ def get_entries(soup):
     for x in range(1, len(tr)):
         #print(tr[x].prettify())
         td = tr[x].findAll('td')
-        if len(td) < 4:
+        if len(td) < 4:         #filter out the header and ads
             continue
 
         td1div = td[1].findAll('div')
@@ -51,10 +51,10 @@ def get_entries(soup):
                 other += t.text + ", "
 
         op = ""
-        if td[3].div.has_attr('style'):
-            op = "(Disowned)"
-        else:
+        if not td[3].div.has_attr('style'):
             op = td[3].div.a.text
+        else:
+            op = td[3].div.text
 
         entries.append(
             {
@@ -83,28 +83,32 @@ def get_url(query):
     cat = 1023
     configs = open('configs.txt', 'r')
     if configs.readline().endswith('1\n'): #Doujinshi
-        cat -= 1
+        cat -= 2
     if configs.readline().endswith('1\n'): #Manga
-        cat -= 1
+        cat -= 4
     if configs.readline().endswith('1\n'): #Artist CG
-        cat -= 1
+        cat -= 8
     if configs.readline().endswith('1\n'): #Game CG
-        cat -= 1
+        cat -= 16
     if configs.readline().endswith('1\n'): #Western
-        cat -= 1
+        cat -= 512
     if configs.readline().endswith('1\n'): #Non-H
-        cat -= 1
+        cat -= 256
     if configs.readline().endswith('1\n'): #Image Set
-        cat -= 1
+        cat -= 32
     if configs.readline().endswith('1\n'): #Cosplay
-        cat -= 1
+        cat -= 64
     if configs.readline().endswith('1\n'): #Asian Porn
-        cat -= 1
+        cat -= 128
     if configs.readline().endswith('1\n'): #Misc
         cat -= 1
     
+    ratConf = configs.readline()
+    minRat = ratConf[-2]
+
     fullUrl += "f_cats=" + str(cat)
     fullUrl += "&f_search=" + query
+    fullUrl += "&f_srdd=" + minRat
 
     return fullUrl
 
@@ -118,7 +122,7 @@ def main():
     fg.subtitle(sys.argv[1])
     fg.language("en")
 
-    file = open('test-html/test1.html')
+    file = open('test-html/test3.html')
     content = file.read()
     soup = BeautifulSoup(content,'html5lib')
     
@@ -136,20 +140,10 @@ def main():
         fe.author(name=entry['op'], email=entry['op'])
         
         summary = "<p>" + entry['pages'] + "</p>"
-        if not entry['authors'].endswith(": "):
-            summary += "<p>" + entry['authors'] + "</p>"
-        if not entry['groups'].endswith(": "):
-            summary += "<p>" + entry['groups'] + "</p>"
-        if not entry['parody'].endswith(": "):
-            summary += "<p>" + entry['parody'] + "</p>"
-        if not entry['characters'].endswith(": "):
-            summary += "<p>" + entry['characters'] + "</p>"
-        if not entry['m_tags'].endswith(": "):
-            summary += "<p>" + entry['m_tags'] + "</p>"
-        if not entry['f_tags'].endswith(": "):
-            summary += "<p>" + entry['f_tags'] + "</p>"
-        if not entry['other'].endswith(": "):
-            summary += "<p>" + entry['other'] + "</p>"
+        tagArray = ['language', 'authors', 'groups', 'parody', 'characters', 'm_tags', 'f_tags', 'other']
+        for tagName in tagArray:
+            if not entry[tagName].endswith(": "):
+                summary += "<p>" + entry[tagName][0:-2] + "</p>"
 
         fe.description(summary)
     fg.rss_file(sys.argv[1] + ".xml")
