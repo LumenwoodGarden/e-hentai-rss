@@ -78,31 +78,19 @@ def get_entries(soup):
 
 
 
-def get_url(query):
+def get_url(query, confFile):
     fullUrl = "https://e-hentai.org/?"
-    cat = 1023
-    configs = open('configs.txt', 'r')
-    if configs.readline().endswith('1\n'): #Doujinshi
-        cat -= 2
-    if configs.readline().endswith('1\n'): #Manga
-        cat -= 4
-    if configs.readline().endswith('1\n'): #Artist CG
-        cat -= 8
-    if configs.readline().endswith('1\n'): #Game CG
-        cat -= 16
-    if configs.readline().endswith('1\n'): #Western
-        cat -= 512
-    if configs.readline().endswith('1\n'): #Non-H
-        cat -= 256
-    if configs.readline().endswith('1\n'): #Image Set
-        cat -= 32
-    if configs.readline().endswith('1\n'): #Cosplay
-        cat -= 64
-    if configs.readline().endswith('1\n'): #Asian Porn
-        cat -= 128
-    if configs.readline().endswith('1\n'): #Misc
-        cat -= 1
     
+    cat = 1023
+    configs = open(confFile, 'r')
+
+    # [ Doujinshi,  Manga,      Artist CG,  Game CG,    Western, 
+    #   Non-H,      Image Set,  Cosplay,    Asian Porn, Misc    ]
+    categories = [2, 4, 8, 16, 512, 256, 32, 64, 128, 1]
+
+    for x in categories:
+        cat -= x * int(configs.readline()[-2])
+       
     ratConf = configs.readline()
     minRat = ratConf[-2]
 
@@ -114,22 +102,36 @@ def get_url(query):
 
 
 def main():
+    feed = []
+    feedFile = open("feeds.txt")
+    line = feedFile.readline()
+    while line:
+        currFeed = line[:-1].split(";")
+        if currFeed[0] == sys.argv[1]:
+            feed = currFeed
+            break
+        line = feedFile.readline()
+
+    if len(feed) == 0:
+        sys.exit("couldn't find a matching feed in feeds.txt")
+
     fg = FeedGenerator()
     fg.id("https://e-hentai.org/")
-    fg.title(sys.argv[1])
+    fg.title(feed[0])
     fg.link(href="https://e-hentai.org/", rel="alternate")
     fg.logo("https://e-hentai.org/favicon.ico")
-    fg.subtitle(sys.argv[1])
+    fg.subtitle(feed[0])
     fg.language("en")
 
-    file = open('test-html/test3.html')
-    content = file.read()
-    soup = BeautifulSoup(content,'html5lib')
+#    testFile = open('test-html/test3.html')
+#    content = testFile.read()
+#    soup = BeautifulSoup(content,'html5lib')
     
-    url = get_url(sys.argv[2])
+    url = get_url(feed[1], (feed[2], "configs.txt") [len(feed)<3 or len(feed[2])==0])
+#    print(feed)
     print(url)
-#    website = requests.get(url)
-#    soup = BeautifulSoup(website.content,'html5lib')
+    website = requests.get(url)
+    soup = BeautifulSoup(website.content,'html5lib')
     for entry in get_entries(soup):
         fe = fg.add_entry()
         fe.title(entry['title'])
@@ -146,7 +148,8 @@ def main():
                 summary += "<p>" + entry[tagName][0:-2] + "</p>"
 
         fe.description(summary)
-    fg.rss_file(sys.argv[1] + ".xml")
+    outputFile = (feed[3], feed[0] + ".xml") [len(feed)<4 or len(feed[3])==0]
+    fg.rss_file(outputFile)
    
 if __name__ == "__main__":
     main()
