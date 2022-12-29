@@ -61,11 +61,12 @@ This can be done using a cron job for more info refer to [mangadex-rss](https://
 
 Unlike mangadex-rss, e-hentai-rss doesn't use the [e-hentai api](https://ehwiki.org/wiki/API) as this only allows you to look up metadata for galleries and images. So e-hentai-rss request the html file for your query instead and extracts all relevant infos from there, this comes with a few limitations unfortunately.
 
-* understandably e-hentai takes countermeasures against excessive requests and can temporarily ban your ip address (1hr -> 24hrs -> maybe more, didn't get that far)
+* understandably e-hentai takes countermeasures against excessive requests and can temporarily ban your ip address (1hr -> 24hrs -> 72hrs -> maybe more, didn't get that far)
     * if you want to use a cron job and/or update multiple feeds, try not to overwhelm e-hentai
 * the http request doesn't include your credentials or preferences, filtering categories and languages has to done via the configurations or query
 * if the page you want to generate a feed for can't be specified with the given tools, it probably isn't possible
 * the search result page only includes 25 entries, if more than 25 entries were added since the last update, the oldest ones will be skipped
+* the generated summary doesn't display all the tags of an entry
 
 # Final notes
 
